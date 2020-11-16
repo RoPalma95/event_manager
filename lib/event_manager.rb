@@ -53,13 +53,13 @@ def log_reg_time(hours_log, reg_time)
 end
 
 def most_registrations_hour(reg_hours)
-  sorted_hours = reg_hours.sort_by { |key, value| value }
-  sorted_hours[sorted_hours.length - 1][0]
+  reg_hours.sort_by { |key, value| value }.reverse[0][0]
 end
 
 def log_reg_day(days_log, day)
   days_log.has_key?(day) ? days_log[day] += 1 : days_log[day] = 1
 end
+
 puts "EventManager Initialized!\n\n"
 
 contents = CSV.open('event_attendees.csv', headers: true, header_converters: :symbol)
@@ -96,5 +96,5 @@ end
 
 best_time_for_ads = most_registrations_hour(reg_hours)
 
-p best_time_for_ads
-p reg_days.max[0]
+puts "Best time for ads: #{best_time_for_ads}h"
+puts "Best day for ads: #{reg_days.max[0]}"
