@@ -48,27 +48,18 @@ def save_thank_you_letter(id, form_letter)
   end
 end
 
-def log_reg_time(log, reg_time)
-  if log.has_key?(reg_time)
-    log[reg_time] += 1
-  else
-    log[reg_time] = 1
-  end
+def log_reg_time(hours_log, reg_time)
+  hours_log.has_key?(reg_time) ? hours_log[reg_time] += 1 : hours_log[reg_time] = 1
 end
 
 def most_registrations_hour(reg_hours)
-  reg_hours.reduce([0,0]) do |acc, (key, value)|
-    [key, value] if acc.empty?
-    if value > acc[1]
-      [key, value]
-    elsif value == acc[1]
-      acc.push([key, value]).flatten
-    else
-      acc
-    end
-  end
+  sorted_hours = reg_hours.sort_by { |key, value| value }
+  sorted_hours[sorted_hours.length - 1][0]
 end
 
+def log_reg_day(days_log, day)
+  days_log.has_key?(day) ? days_log[day] += 1 : days_log[day] = 1
+end
 puts "EventManager Initialized!\n\n"
 
 contents = CSV.open('event_attendees.csv', headers: true, header_converters: :symbol)
@@ -76,11 +67,13 @@ contents = CSV.open('event_attendees.csv', headers: true, header_converters: :sy
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new(template_letter)
 reg_hours = {}
+reg_days = {}
+WEEK_DAYS = %w[Sunday Monday Tuesday Wednesday Thursday Friday Saturday].freeze
 
 contents.each do |row|
   id = row[0] # id header is blank, that's why we don't use the columns name
 
-  reg_time = DateTime.strptime(row[:regdate], "%m/%d/%y %H:%M").hour.to_s
+  reg_time = DateTime.strptime(row[:regdate], "%m/%d/%y %H:%M")
 
   name = row[:first_name]
 
@@ -94,13 +87,14 @@ contents.each do |row|
 
   save_thank_you_letter(id, form_letter)
 
-  log_reg_time(reg_hours, reg_time)
+  log_reg_time(reg_hours, reg_time.hour.to_s)
+
+  log_reg_day(reg_days, WEEK_DAYS[reg_time.wday])
 
   puts "#{name} #{zipcode} #{phone_number}"
 end
 
 best_time_for_ads = most_registrations_hour(reg_hours)
 
-p best_time_for_ads.length > 2 ? "Best times for ads are at #{best_time_for_ads[0]}h & #{best_time_for_ads[2]}h." : "The best time for ads is at #{best_time_for_ads[0]}h."
-
-# p best_time_for_ads
+p best_time_for_ads
+p reg_days.max[0]
